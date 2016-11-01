@@ -106,7 +106,7 @@ func main() {
     }
 
     // exec the schema or fail; multi-statement Exec behavior varies between
-    // database drivers;  pq will exec them all, sqlite3 won't, ymmv
+    // database drivers;  pq will exec them all, ymmv
     db.MustExec(schema)
     
     tx := db.MustBegin()

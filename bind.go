@@ -25,8 +25,6 @@ func BindType(driverName string) int {
 		return DOLLAR
 	case "mysql":
 		return QUESTION
-	case "sqlite3":
-		return QUESTION
 	case "oci8", "ora", "goracle":
 		return NAMED
 	}

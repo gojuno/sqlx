@@ -1,6 +1,5 @@
 // The following environment variables, if set, will be used:
 //
-//	* SQLX_SQLITE_DSN
 //	* SQLX_POSTGRES_DSN
 //	* SQLX_MYSQL_DSN
 //
@@ -25,7 +24,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx/reflectx"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 /* compile time checks that Db, Tx, Stmt (qStmt) implement expected interfaces */
@@ -35,7 +33,6 @@ var _ Queryer = &qStmt{}
 var _ Execer = &qStmt{}
 
 var TestPostgres = true
-var TestSqlite = true
 var TestMysql = true
 
 var sldb *DB
@@ -52,11 +49,9 @@ func ConnectAll() {
 
 	pgdsn := os.Getenv("SQLX_POSTGRES_DSN")
 	mydsn := os.Getenv("SQLX_MYSQL_DSN")
-	sqdsn := os.Getenv("SQLX_SQLITE_DSN")
 
 	TestPostgres = pgdsn != "skip"
 	TestMysql = mydsn != "skip"
-	TestSqlite = sqdsn != "skip"
 
 	if !strings.Contains(mydsn, "parseTime=true") {
 		mydsn += "?parseTime=true"
@@ -81,16 +76,6 @@ func ConnectAll() {
 	} else {
 		fmt.Println("Disabling MySQL tests.")
 	}
-
-	if TestSqlite {
-		sldb, err = Connect("sqlite3", sqdsn)
-		if err != nil {
-			fmt.Printf("Disabling SQLite:\n    %v", err)
-			TestSqlite = false
-		}
-	} else {
-		fmt.Println("Disabling SQLite tests.")
-	}
 }
 
 type Schema struct {
@@ -104,10 +89,6 @@ func (s Schema) Postgres() (string, string) {
 
 func (s Schema) MySQL() (string, string) {
 	return strings.Replace(s.create, `"`, "`", -1), s.drop
-}
-
-func (s Schema) Sqlite3() (string, string) {
-	return strings.Replace(s.create, `now()`, `CURRENT_TIMESTAMP`, -1), s.drop
 }
 
 var defaultSchema = Schema{
@@ -231,10 +212,6 @@ func RunWithSchema(schema Schema, t *testing.T, test func(db *DB, t *testing.T))
 	if TestPostgres {
 		create, drop := schema.Postgres()
 		runner(pgdb, t, create, drop)
-	}
-	if TestSqlite {
-		create, drop := schema.Sqlite3()
-		runner(sldb, t, create, drop)
 	}
 	if TestMysql {
 		create, drop := schema.MySQL()
@@ -676,7 +653,7 @@ func TestNamedQuery(t *testing.T) {
 		db.Mapper = reflectx.NewMapperFunc("json", strings.ToUpper)
 
 		// prepare queries for case sensitivity to test our ToUpper function.
-		// postgres and sqlite accept "", but mysql uses ``;  since Go's multi-line
+		// postgres accepts "", but mysql uses ``;  since Go's multi-line
 		// strings are `` we use "" by default and swap out for MySQL
 		pdb := func(s string, db *DB) string {
 			if db.DriverName() == "mysql" {
@@ -794,7 +771,7 @@ func TestNamedQuery(t *testing.T) {
 				email,
 				place.id AS "place.id",
 				place.name AS "place.name"
-			FROM placeperson 
+			FROM placeperson
 			INNER JOIN place ON place.id = placeperson.place_id
 			WHERE
 				place.id=:place.id`, pp)
