@@ -542,6 +542,12 @@ type Rows struct {
 	values  []interface{}
 }
 
+// Unsafe returns a version of Rows which will silently succeed to scan when
+// columns in the SQL result have no fields in the destination struct.
+func (r *Rows) Unsafe() *Rows {
+	return &Rows{Rows: r.Rows, unsafe: true, Mapper: r.Mapper, started: r.started, fields: r.fields, values: r.values}
+}
+
 // SliceScan using this Rows.
 func (r *Rows) SliceScan() ([]interface{}, error) {
 	return SliceScan(r)
