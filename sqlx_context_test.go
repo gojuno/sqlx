@@ -23,9 +23,8 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx/reflectx"
+	"github.com/gojuno/sqlx/reflectx"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func MultiExecContext(ctx context.Context, e ExecerContext, query string) {
@@ -54,10 +53,6 @@ func RunWithSchemaContext(ctx context.Context, schema Schema, t *testing.T, test
 	if TestPostgres {
 		create, drop := schema.Postgres()
 		runner(ctx, pgdb, t, create, drop)
-	}
-	if TestSqlite {
-		create, drop := schema.Sqlite3()
-		runner(ctx, sldb, t, create, drop)
 	}
 	if TestMysql {
 		create, drop := schema.MySQL()
